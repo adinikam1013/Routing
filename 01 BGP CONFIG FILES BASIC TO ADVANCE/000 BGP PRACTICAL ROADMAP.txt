@@ -1,0 +1,166 @@
+BGP PRACTICAL ROADMAP
+
+BEGINNER LEVEL
+
+1. Configure single eBGP peering
+2. Verify BGP neighbor states
+3. Advertise network using network command
+4. Advertise loopback networks
+5. Withdraw advertised routes
+6. Troubleshoot neighbor establishment
+7. BGP soft reset
+8. View BGP table vs Routing table
+9. Configure BGP authentication (MD5)
+10. Use next-hop-self
+
+BASIC INTERMEDIATE
+
+11. Configure iBGP peering
+12. Build 3-router iBGP topology
+13. Understand iBGP split-horizon behavior
+14. Configure full-mesh iBGP
+15. eBGP multihop
+16. Loopback-to-loopback BGP peering
+17. Route advertisement between eBGP and iBGP
+18. BGP synchronization
+19. Disable synchronization
+20. BGP neighbor templates
+
+PATH SELECTION LABS
+
+21. Weight attribute
+22. Local Preference attribute
+23. AS Path attribute
+24. AS Path prepending
+25. MED attribute
+26. Origin attribute
+27. eBGP vs iBGP preference
+28. deterministic-med
+29. always-compare-med
+30. Best path selection troubleshooting
+
+ROUTE FILTERING LABS
+
+31. Prefix-list filtering inbound
+32. Prefix-list filtering outbound
+33. AS-path access-list filtering
+34. Route-map filtering
+35. Community-based filtering
+36. Extended community filtering
+37. Neighbor-specific filtering
+38. Default-route filtering
+39. Bogon route filtering
+40. Route leak prevention
+
+ROUTE MANIPULATION LABS
+
+41. Set Local Preference via route-map
+42. Set Weight via route-map
+43. Set MED via route-map
+44. AS Path prepend via route-map
+45. Change next-hop value
+46. Community tagging
+47. Community matching
+48. Community propagation
+49. Extended communities
+50. Large communities
+
+SCALABILITY LABS
+
+51. Route Reflector deployment
+52. Route Reflector redundancy
+53. Cluster-ID configuration
+54. Route Reflector troubleshooting
+55. BGP Confederation setup
+56. Confederation route propagation
+57. Confederation troubleshooting
+58. Large-scale iBGP design
+59. Route aggregation
+60. Aggregate-address configuration
+
+ENTERPRISE WAN LABS
+
+61. Single ISP connectivity
+62. Dual ISP connectivity
+63. Active/Standby ISP design
+64. Active/Active ISP design
+65. Internet default route learning
+66. Default-originate configuration
+67. Outbound traffic engineering
+68. Inbound traffic engineering
+69. ISP failover testing
+70. BGP conditional advertisement
+
+SERVICE PROVIDER LABS
+
+71. Customer-to-Provider eBGP
+72. Provider-to-Provider peering
+73. Transit provider configuration
+74. Internet Exchange (IX) simulation
+75. Customer route filtering
+76. Route-server peering
+77. Blackhole routing
+78. DDoS mitigation using BGP communities
+79. Upstream route control
+80. BGP policy design
+
+ADVANCED BGP LABS
+
+81. Multipath load balancing
+82. Maximum-paths configuration
+83. Add-Path feature
+84. BGP PIC Edge
+85. BGP PIC Core
+86. BGP graceful restart
+87. BFD with BGP
+88. Route dampening
+89. Next-hop tracking
+90. Fast convergence testing
+
+MPLS AND VPN LABS
+
+91. MP-BGP fundamentals
+92. MPLS L3VPN deployment
+93. VRF creation
+94. VPNv4 route exchange
+95. Route Target import/export
+96. Route Distinguisher configuration
+97. Inter-AS MPLS VPN
+98. Carrier Supporting Carrier
+99. Multitenant VPN design
+100. MPLS VPN troubleshooting
+
+DATA CENTER BGP LABS
+
+101. Spine-Leaf BGP Fabric
+102. eBGP underlay
+103. EVPN VXLAN deployment
+104. EVPN Type-2 routes
+105. EVPN Type-5 routes
+106. Anycast Gateway
+107. VXLAN Multi-homing
+108. EVPN Route Reflector
+109. Data Center Interconnect (DCI)
+110. EVPN troubleshooting
+
+EXPERT LEVEL
+
+111. Full Internet table simulation
+112. Route scale testing
+113. BGP convergence benchmarking
+114. Internet edge design
+115. Multi-region BGP architecture
+116. ISP Route Reflector cluster
+117. BGP security implementation
+118. RPKI validation
+119. BGP hijack simulation and mitigation
+120. End-to-end ISP network design project
+
+CAPSTONE PROJECTS
+
+1. Enterprise with Dual ISPs
+2. Multi-site WAN using BGP
+3. ISP Core Network
+4. MPLS L3VPN Provider Network
+5. EVPN VXLAN Data Center Fabric
+6. ISP Network with Route Reflectors and Routing Policies
