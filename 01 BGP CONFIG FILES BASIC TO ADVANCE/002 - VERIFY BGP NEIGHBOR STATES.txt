@@ -1,0 +1,213 @@
+====================================================
+PRACTICAL 02 - VERIFY BGP NEIGHBOR STATES
+====================================================
+
+TOPOLOGY
+
+        AS65001                 AS65002
+
+     +--------+              +--------+
+     |   R1   |--------------|   R2   |
+     +--------+              +--------+
+
+      G0/0                    G0/0
+   10.1.1.1/30             10.1.1.2/30
+
+====================================================
+EXISTING CONFIGURATION
+====================================================
+
+R1
+
+router bgp 65001
+ neighbor 10.1.1.2 remote-as 65002
+
+R2
+
+router bgp 65002
+ neighbor 10.1.1.1 remote-as 65001
+
+====================================================
+OBJECTIVE
+====================================================
+
+Verify all BGP neighbor states:
+
+1. Idle
+2. Connect
+3. Active
+4. OpenSent
+5. OpenConfirm
+6. Established
+
+====================================================
+STATE 1 : ESTABLISHED
+====================================================
+
+Command:
+
+show ip bgp summary
+
+Expected:
+
+Neighbor      V    AS MsgRcvd MsgSent State/PfxRcd
+
+10.1.1.1      4 65001     xx      xx       1
+
+Meaning:
+
+- BGP Session Up
+- Routes Being Exchanged
+
+====================================================
+STATE 2 : IDLE
+====================================================
+
+On R2
+
+conf t
+interface g0/0
+shutdown
+
+Check on R1
+
+show ip bgp summary
+
+Expected:
+
+Neighbor      V    AS MsgRcvd MsgSent State/PfxRcd
+
+10.1.1.2      4 65002      0       0      Idle
+
+Meaning:
+
+- BGP Not Running
+- Session Not Established
+
+Restore:
+
+interface g0/0
+no shutdown
+
+====================================================
+STATE 3 : ACTIVE
+====================================================
+
+Create Wrong Neighbor IP on R1
+
+conf t
+router bgp 65001
+no neighbor 10.1.1.2 remote-as 65002
+neighbor 10.1.1.100 remote-as 65002
+
+Check:
+
+show ip bgp summary
+
+Expected:
+
+Neighbor       V    AS State/PfxRcd
+
+10.1.1.100     4 65002 Active
+
+Meaning:
+
+- TCP Connection Failing
+- Neighbor Unreachable
+
+Restore:
+
+router bgp 65001
+no neighbor 10.1.1.100 remote-as 65002
+neighbor 10.1.1.2 remote-as 65002
+
+====================================================
+STATE 4 : CONNECT
+====================================================
+
+Observe quickly after restoring config
+
+show ip bgp summary
+
+Possible Output:
+
+Connect
+
+Meaning:
+
+- TCP Session Initiated
+- Waiting For TCP Completion
+
+====================================================
+STATE 5 : OPENSENT
+====================================================
+
+Possible Output:
+
+OpenSent
+
+Meaning:
+
+- TCP Established
+- BGP OPEN Message Sent
+
+OPEN Message Contains:
+
+- ASN
+- Router ID
+- Hold Time
+- BGP Version
+
+====================================================
+STATE 6 : OPENCONFIRM
+====================================================
+
+Possible Output:
+
+OpenConfirm
+
+Meaning:
+
+- OPEN Message Accepted
+- Waiting For KEEPALIVE
+
+====================================================
+FINAL STATE : ESTABLISHED
+====================================================
+
+Expected Output:
+
+show ip bgp summary
+
+Neighbor      V    AS MsgRcvd MsgSent State/PfxRcd
+
+10.1.1.1      4 65001      xx      xx        1
+
+Meaning:
+
+- Neighbor Up
+- Routes Received
+- BGP Working Properly
+
+====================================================
+STATE FLOW
+====================================================
+
+Idle
+ |
+ v
+Connect
+ |
+ v
+Active (If TCP Fails)
+ |
+ v
+OpenSent
+ |
+ v
+OpenConfirm
+ |
+ v
+Established
+
+====================================================
