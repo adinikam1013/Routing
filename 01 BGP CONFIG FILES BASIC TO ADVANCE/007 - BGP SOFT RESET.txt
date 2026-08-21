@@ -1,0 +1,273 @@
+====================================================
+PRACTICAL 07 - BGP SOFT RESET
+====================================================
+
+TOPOLOGY
+
+        AS65001                 AS65002
+
+     +--------+              +--------+
+     |   R1   |--------------|   R2   |
+     +--------+              +--------+
+
+      G0/0                    G0/0
+   10.1.1.1/30             10.1.1.2/30
+
+      Lo0                     Lo0
+    1.1.1.1/32              2.2.2.2/32
+
+====================================================
+OBJECTIVE
+====================================================
+
+1. Understand Soft Reset
+2. Apply New BGP Policy
+3. Refresh BGP Routes
+4. Avoid BGP Neighbor Flap
+
+====================================================
+WHAT IS SOFT RESET
+====================================================
+Soft Reset Allows BGP To Relearn Routes
+Without Tearing Down The BGP Session.
+
+Normal Reset:
+
+clear ip bgp *
+
+Result:
+
+Neighbor Goes Down And Re-establishes
+
+Soft Reset:
+clear ip bgp * soft
+
+Result:
+Neighbor Remains Up
+Routes Re-evaluated
+
+====================================================
+BASE CONFIGURATION
+====================================================
+
+R1
+interface Loopback0
+ ip address 1.1.1.1 255.255.255.255
+
+interface g0/0
+ ip address 10.1.1.1 255.255.255.252
+ no shutdown
+
+router bgp 65001
+ neighbor 10.1.1.2 remote-as 65002
+ network 1.1.1.1 mask 255.255.255.255
+
+====================================================
+
+R2
+interface Loopback0
+ ip address 2.2.2.2 255.255.255.255
+
+interface g0/0
+ ip address 10.1.1.2 255.255.255.252
+ no shutdown
+
+
+router bgp 65002
+ neighbor 10.1.1.1 remote-as 65001
+ network 2.2.2.2 mask 255.255.255.255
+
+====================================================
+VERIFY INITIAL STATE
+====================================================
+
+show ip bgp summary
+
+Expected:
+
+Neighbor State/PfxRcd
+
+10.1.1.1      1
+
+Session Established
+
+====================================================
+CREATE PREFIX LIST
+====================================================
+
+R2
+
+conf t
+
+ip prefix-list BLOCK-R1 seq 10 deny 1.1.1.1/32
+ip prefix-list BLOCK-R1 seq 20 permit 0.0.0.0/0 le 32
+
+route-map FILTER-IN permit 10
+ match ip address prefix-list BLOCK-R1
+
+router bgp 65002
+ neighbor 10.1.1.1 route-map FILTER-IN in
+
+end
+
+====================================================
+CHECK ROUTE
+====================================================
+
+show ip bgp
+
+Expected:
+
+1.1.1.1/32 Still Visible
+
+Reason:
+
+New Policy Applied
+But Existing Routes Not Refreshed
+
+====================================================
+PERFORM SOFT RESET
+====================================================
+
+R2
+
+clear ip bgp 10.1.1.1 soft in
+
+OR
+
+clear ip bgp * soft in
+
+====================================================
+VERIFY AGAIN
+====================================================
+
+show ip bgp
+
+Expected:
+
+1.1.1.1/32 Removed
+
+Policy Immediately Applied
+
+====================================================
+VERIFY SESSION STATUS
+====================================================
+
+show ip bgp summary
+
+Expected:
+
+Neighbor State/PfxRcd
+
+10.1.1.1      1
+
+Neighbor Remains Up
+
+No Flap Occurred
+
+====================================================
+SOFT RESET TYPES
+====================================================
+
+Inbound Soft Reset
+
+clear ip bgp * soft in
+
+Relearn Routes From Neighbor
+
+----------------------------------------------------
+
+Outbound Soft Reset
+
+clear ip bgp * soft out
+
+Resend Routes To Neighbor
+
+----------------------------------------------------
+
+Both Directions
+
+clear ip bgp * soft
+
+====================================================
+HARD RESET
+====================================================
+
+clear ip bgp *
+
+Result:
+
+Neighbor Down
+TCP Re-established
+Routes Relearned
+
+Use Carefully In Production
+
+====================================================
+VERIFY COMMANDS
+====================================================
+
+show ip bgp
+
+show ip bgp summary
+
+show ip bgp neighbors
+
+show ip route bgp
+
+show running-config | section bgp
+
+====================================================
+SOFT RESET VS HARD RESET
+====================================================
+
+SOFT RESET
+
+Neighbor Down : No
+Traffic Impact : No
+Production Safe : Yes
+
+----------------------------------------------------
+
+HARD RESET
+
+Neighbor Down : Yes
+Traffic Impact : Possible
+Production Safe : Use Carefully
+
+====================================================
+REAL WORLD USE
+====================================================
+
+1. Prefix List Changed
+2. Route Map Changed
+3. Community Policy Changed
+4. Attribute Manipulation Changed
+5. Route Filtering Changed
+
+Apply Soft Reset To Reprocess Routes
+
+====================================================
+POSSIBLE ISSUES
+====================================================
+
+Soft Reset Not Working
+
+Possible Causes:
+
+- Neighbor Does Not Support Route Refresh
+- Policy Applied On Wrong Direction
+- Wrong Prefix List
+- Wrong Route Map
+
+Check:
+
+show ip bgp neighbors
+
+Look For:
+
+Route refresh: advertised and received
+
+====================================================
+PRACTICAL 07 COMPLETED
+====================================================
