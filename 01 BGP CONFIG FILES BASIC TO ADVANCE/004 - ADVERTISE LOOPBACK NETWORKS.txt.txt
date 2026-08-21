@@ -1,0 +1,234 @@
+====================================================
+PRACTICAL 04 - ADVERTISE LOOPBACK NETWORKS
+====================================================
+
+TOPOLOGY
+
+        AS65001                 AS65002
+
+     +--------+              +--------+
+     |   R1   |--------------|   R2   |
+     +--------+              +--------+
+
+      G0/0                    G0/0
+   10.1.1.1/30             10.1.1.2/30
+
+      Lo0                     Lo0
+    1.1.1.1/32              2.2.2.2/32
+
+      Lo1                     Lo1
+    11.11.11.11/32         22.22.22.22/32
+
+====================================================
+OBJECTIVE
+====================================================
+
+1. Create Multiple Loopbacks
+2. Advertise Loopbacks Through BGP
+3. Verify Learned Routes
+4. Verify BGP Table And Routing Table
+
+====================================================
+R1 CONFIGURATION
+====================================================
+
+enable
+configure terminal
+
+hostname R1
+
+interface GigabitEthernet0/0
+ ip address 10.1.1.1 255.255.255.252
+ no shutdown
+
+interface Loopback0
+ ip address 1.1.1.1 255.255.255.255
+
+interface Loopback1
+ ip address 11.11.11.11 255.255.255.255
+
+router bgp 65001
+ neighbor 10.1.1.2 remote-as 65002
+
+ network 1.1.1.1 mask 255.255.255.255
+ network 11.11.11.11 mask 255.255.255.255
+
+end
+
+write memory
+
+====================================================
+R2 CONFIGURATION
+====================================================
+
+enable
+configure terminal
+
+hostname R2
+
+interface GigabitEthernet0/0
+ ip address 10.1.1.2 255.255.255.252
+ no shutdown
+
+interface Loopback0
+ ip address 2.2.2.2 255.255.255.255
+
+interface Loopback1
+ ip address 22.22.22.22 255.255.255.255
+
+router bgp 65002
+ neighbor 10.1.1.1 remote-as 65001
+
+ network 2.2.2.2 mask 255.255.255.255
+ network 22.22.22.22 mask 255.255.255.255
+
+end
+
+write memory
+
+====================================================
+VERIFICATION 1
+====================================================
+
+show ip bgp summary
+
+Expected:
+
+State/PfxRcd = 2
+
+R1 Receives:
+
+2.2.2.2/32
+22.22.22.22/32
+
+R2 Receives:
+
+1.1.1.1/32
+11.11.11.11/32
+
+====================================================
+VERIFICATION 2
+====================================================
+
+R1
+
+show ip bgp
+
+Expected:
+
+*> 1.1.1.1/32       0.0.0.0
+*> 11.11.11.11/32   0.0.0.0
+*> 2.2.2.2/32       10.1.1.2
+*> 22.22.22.22/32   10.1.1.2
+
+====================================================
+VERIFICATION 3
+====================================================
+
+R2
+
+show ip bgp
+
+Expected:
+
+*> 1.1.1.1/32       10.1.1.1
+*> 11.11.11.11/32   10.1.1.1
+*> 2.2.2.2/32       0.0.0.0
+*> 22.22.22.22/32   0.0.0.0
+
+====================================================
+VERIFICATION 4
+====================================================
+
+R1
+
+show ip route bgp
+
+Expected:
+
+B 2.2.2.2/32
+B 22.22.22.22/32
+
+R2
+
+show ip route bgp
+
+Expected:
+
+B 1.1.1.1/32
+B 11.11.11.11/32
+
+====================================================
+PING TEST
+====================================================
+
+R1
+
+ping 2.2.2.2 source loopback0
+ping 22.22.22.22 source loopback0
+
+R2
+
+ping 1.1.1.1 source loopback0
+ping 11.11.11.11 source loopback0
+
+====================================================
+REMOVE A LOOPBACK ADVERTISEMENT
+====================================================
+
+R1
+
+router bgp 65001
+ no network 11.11.11.11 mask 255.255.255.255
+
+Verify On R2
+
+show ip bgp
+
+Expected:
+
+11.11.11.11/32 disappears
+
+====================================================
+IMPORTANT NOTE
+====================================================
+
+Every Network Advertised In BGP Must Exist In Routing Table.
+
+Verify:
+
+show ip route
+
+Example:
+
+Loopback1
+ ip address 11.11.11.11 255.255.255.255
+
+router bgp 65001
+ network 11.11.11.11 mask 255.255.255.255
+
+If Loopback Is Removed:
+
+no interface Loopback1
+
+Then Route Will Automatically Be Withdrawn From BGP.
+
+====================================================
+USEFUL COMMANDS
+====================================================
+
+show ip bgp
+
+show ip bgp summary
+
+show ip route
+
+show ip route bgp
+
+show ip bgp neighbors
+
+show running-config | section bgp
+
+====================================================
+PRACTICAL 04 COMPLETED
+====================================================
