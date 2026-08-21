@@ -1,0 +1,225 @@
+====================================================
+PRACTICAL 05 - WITHDRAW ADVERTISED ROUTES
+====================================================
+
+TOPOLOGY
+
+        AS65001                 AS65002
+
+     +--------+              +--------+
+     |   R1   |--------------|   R2   |
+     +--------+              +--------+
+
+      G0/0                    G0/0
+   10.1.1.1/30             10.1.1.2/30
+
+      Lo0                     Lo0
+    1.1.1.1/32              2.2.2.2/32
+
+      Lo1                     Lo1
+   11.11.11.11/32         22.22.22.22/32
+
+====================================================
+OBJECTIVE
+====================================================
+
+1. Advertise Routes Using BGP
+2. Withdraw Advertised Routes
+3. Verify Route Removal
+4. Verify BGP Table Updates
+
+====================================================
+INITIAL CONFIGURATION
+====================================================
+
+R1
+
+router bgp 65001
+ neighbor 10.1.1.2 remote-as 65002
+
+ network 1.1.1.1 mask 255.255.255.255
+ network 11.11.11.11 mask 255.255.255.255
+
+R2
+
+router bgp 65002
+ neighbor 10.1.1.1 remote-as 65001
+
+ network 2.2.2.2 mask 255.255.255.255
+ network 22.22.22.22 mask 255.255.255.255
+
+====================================================
+VERIFY BEFORE WITHDRAW
+====================================================
+
+R2
+
+show ip bgp
+
+Expected:
+
+*> 1.1.1.1/32
+*> 11.11.11.11/32
+*> 2.2.2.2/32
+*> 22.22.22.22/32
+
+====================================================
+METHOD 1 - REMOVE NETWORK STATEMENT
+====================================================
+
+R1
+
+conf t
+
+router bgp 65001
+
+no network 11.11.11.11 mask 255.255.255.255
+
+end
+
+====================================================
+VERIFY AFTER WITHDRAW
+====================================================
+
+R2
+
+show ip bgp
+
+Expected:
+
+*> 1.1.1.1/32
+*> 2.2.2.2/32
+*> 22.22.22.22/32
+
+Route Removed:
+
+11.11.11.11/32
+
+====================================================
+VERIFY ROUTING TABLE
+====================================================
+
+R2
+
+show ip route bgp
+
+Expected:
+
+B 1.1.1.1/32
+B 2.2.2.2/32
+B 22.22.22.22/32
+
+Route Missing:
+
+11.11.11.11/32
+
+====================================================
+METHOD 2 - REMOVE LOOPBACK INTERFACE
+====================================================
+
+R1
+
+conf t
+
+no interface Loopback1
+
+end
+
+====================================================
+VERIFY
+====================================================
+
+R2
+
+show ip bgp
+
+Expected:
+
+11.11.11.11/32 removed
+
+Reason:
+
+Route no longer exists in routing table.
+
+====================================================
+METHOD 3 - SHUT INTERFACE
+====================================================
+
+R1
+
+conf t
+
+interface Loopback1
+ shutdown
+
+end
+
+Verify:
+
+show ip bgp
+
+Note:
+
+Physical Interfaces Usually Withdraw Routes.
+
+Loopback Interfaces Stay Up On Most IOS Versions.
+
+====================================================
+READVERTISE ROUTE
+====================================================
+
+R1
+
+conf t
+
+interface Loopback1
+ ip address 11.11.11.11 255.255.255.255
+
+router bgp 65001
+ network 11.11.11.11 mask 255.255.255.255
+
+end
+
+====================================================
+VERIFY ROUTE RETURNS
+====================================================
+
+R2
+
+show ip bgp
+
+Expected:
+
+*> 11.11.11.11/32
+
+Route Learned Again
+
+====================================================
+USEFUL COMMANDS
+====================================================
+
+show ip bgp
+
+show ip bgp summary
+
+show ip route
+
+show ip route bgp
+
+show ip bgp neighbors
+
+show running-config | section bgp
+
+====================================================
+EXPECTED LEARNING
+====================================================
+
+1. BGP Advertises Only Existing Routes
+2. Removing Network Statement Withdraws Route
+3. Removing Route From RIB Withdraws Route
+4. Neighbor Receives Withdrawal Update
+5. BGP Table And Routing Table Update Automatically
+
+====================================================
+PRACTICAL 05 COMPLETED
+====================================================
