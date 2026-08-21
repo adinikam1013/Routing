@@ -1,0 +1,367 @@
+====================================================
+PRACTICAL 06 - TROUBLESHOOT BGP NEIGHBOR ESTABLISHMENT
+====================================================
+
+TOPOLOGY
+
+        AS65001                 AS65002
+
+     +--------+              +--------+
+     |   R1   |--------------|   R2   |
+     +--------+              +--------+
+
+      G0/0                    G0/0
+   10.1.1.1/30             10.1.1.2/30
+
+====================================================
+OBJECTIVE
+====================================================
+
+1. Verify Healthy BGP Neighbor
+2. Create Common BGP Failures
+3. Identify BGP States
+4. Troubleshoot And Restore Neighbor Relationship
+
+====================================================
+WORKING CONFIGURATION
+====================================================
+
+R1
+
+hostname R1
+
+interface GigabitEthernet0/0
+ ip address 10.1.1.1 255.255.255.252
+ no shutdown
+
+router bgp 65001
+ neighbor 10.1.1.2 remote-as 65002
+
+====================================================
+
+R2
+
+hostname R2
+
+interface GigabitEthernet0/0
+ ip address 10.1.1.2 255.255.255.252
+ no shutdown
+
+router bgp 65002
+ neighbor 10.1.1.1 remote-as 65001
+
+====================================================
+VERIFY HEALTHY SESSION
+====================================================
+
+show ip bgp summary
+
+Expected:
+
+Neighbor        V    AS MsgRcvd MsgSent State/PfxRcd
+
+10.1.1.2        4 65002      xx      xx       1
+
+====================================================
+SCENARIO 1 - WRONG NEIGHBOR IP
+====================================================
+
+R1
+
+conf t
+
+router bgp 65001
+ no neighbor 10.1.1.2 remote-as 65002
+ neighbor 10.1.1.100 remote-as 65002
+
+end
+
+Verify:
+
+show ip bgp summary
+
+Expected:
+
+State = Active
+
+Troubleshooting:
+
+show run | section bgp
+
+Fix:
+
+router bgp 65001
+ no neighbor 10.1.1.100 remote-as 65002
+ neighbor 10.1.1.2 remote-as 65002
+
+====================================================
+SCENARIO 2 - WRONG REMOTE-AS
+====================================================
+
+R1
+
+conf t
+
+router bgp 65001
+ no neighbor 10.1.1.2 remote-as 65002
+ neighbor 10.1.1.2 remote-as 65003
+
+end
+
+Verify:
+
+show ip bgp summary
+
+Expected:
+
+State = Active
+
+Troubleshooting:
+
+show run | section bgp
+
+Fix:
+
+router bgp 65001
+ no neighbor 10.1.1.2 remote-as 65003
+ neighbor 10.1.1.2 remote-as 65002
+
+====================================================
+SCENARIO 3 - INTERFACE DOWN
+====================================================
+
+R2
+
+conf t
+
+interface GigabitEthernet0/0
+ shutdown
+
+end
+
+Verify R1:
+
+show ip bgp summary
+
+Expected:
+
+State = Idle
+
+Troubleshooting:
+
+show ip interface brief
+
+Fix:
+
+interface GigabitEthernet0/0
+ no shutdown
+
+====================================================
+SCENARIO 4 - IP ADDRESS MISMATCH
+====================================================
+
+R2
+
+conf t
+
+interface GigabitEthernet0/0
+ ip address 10.1.2.2 255.255.255.252
+
+end
+
+Verify:
+
+ping 10.1.1.2
+
+Expected:
+
+Fail
+
+show ip bgp summary
+
+Expected:
+
+State = Active
+
+Fix:
+
+interface GigabitEthernet0/0
+ ip address 10.1.1.2 255.255.255.252
+
+====================================================
+SCENARIO 5 - NO IP CONNECTIVITY
+====================================================
+
+Check:
+
+ping 10.1.1.2
+
+If Ping Fails:
+
+BGP Will Not Establish
+
+Check:
+
+show ip interface brief
+
+show ip route
+
+====================================================
+SCENARIO 6 - TCP PORT 179 BLOCKED
+====================================================
+
+Apply ACL Blocking TCP/179
+
+Expected:
+
+State = Active
+
+Check:
+
+show access-lists
+
+Fix:
+
+Remove ACL Or Permit TCP 179
+
+====================================================
+TROUBLESHOOTING COMMANDS
+====================================================
+
+show ip bgp summary
+
+show ip bgp neighbors
+
+show ip interface brief
+
+show ip route
+
+show running-config
+
+show running-config | section bgp
+
+ping 10.1.1.2
+
+traceroute 10.1.1.2
+
+====================================================
+DEBUG COMMANDS
+====================================================
+
+debug ip bgp
+
+debug ip tcp transactions
+
+undebug all
+
+====================================================
+COMMON BGP STATES
+====================================================
+
+Idle
+  BGP Not Started
+
+Connect
+  TCP Connection In Progress
+
+Active
+  Unable To Establish TCP Session
+
+OpenSent
+  OPEN Message Sent
+
+OpenConfirm
+  Waiting For KEEPALIVE
+
+Established
+  Neighbor Up And Exchanging Routes
+
+====================================================
+QUICK TROUBLESHOOTING CHECKLIST
+====================================================
+
+1. Interface UP/UP
+2. Correct IP Address
+3. Successful Ping
+4. Correct Neighbor IP
+5. Correct Remote-AS
+6. TCP Port 179 Reachable
+7. No ACL Blocking Traffic
+8. Verify BGP State
+9. Check Debug Output
+10. Confirm Established State
+
+====================================================
+SUCCESS CRITERIA
+====================================================
+
+show ip bgp summary
+
+Expected:
+
+Neighbor        V    AS MsgRcvd MsgSent State/PfxRcd
+
+10.1.1.2        4 65002      xx      xx       1
+
+State/PfxRcd Must Show A Number
+
+NOT
+
+Idle
+Connect
+Active
+OpenSent
+OpenConfirm
+
+====================================================
+PRACTICAL 06 COMPLETED
+====================================================
+
+====================================================
+BGP STATE VS POSSIBLE ISSUE
+====================================================
+
+STATE          POSSIBLE ISSUE
+
+Idle           BGP process not started
+               Interface down
+               Neighbor shutdown
+               Configuration missing
+
+Connect        TCP connection in progress
+               Normally temporary state
+
+Active         Wrong neighbor IP
+               Wrong subnet
+               No IP connectivity
+               ACL blocking TCP 179
+               Interface down
+               Routing issue
+
+OpenSent       ASN mismatch
+               BGP version mismatch
+               OPEN message problem
+
+OpenConfirm    Waiting for KEEPALIVE
+               Usually temporary state
+
+Established    No issue
+               BGP session successfully established
+
+====================================================
+MOST COMMON REAL-WORLD ISSUES
+====================================================
+
+Active         90% of the time:
+               Ping failure
+               Wrong Neighbor IP
+               ACL blocking TCP 179
+
+OpenSent       Usually:
+               Wrong Remote-AS
+
+Idle           Usually:
+               Interface shutdown
+               Neighbor configuration missing
+
+Established    Healthy state
