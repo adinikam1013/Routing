@@ -1,0 +1,231 @@
+====================================================
+PRACTICAL 08 - VIEW BGP TABLE VS ROUTING TABLE
+====================================================
+
+TOPOLOGY
+
+        AS65001                 AS65002
+
+     +--------+              +--------+
+     |   R1   |--------------|   R2   |
+     +--------+              +--------+
+
+      G0/0                    G0/0
+   10.1.1.1/30             10.1.1.2/30
+
+      Lo0                     Lo0
+    1.1.1.1/32              2.2.2.2/32
+
+====================================================
+OBJECTIVE
+====================================================
+
+1. View BGP Table
+2. View Routing Table
+3. Understand Difference
+4. Verify BGP Routes Installed In Routing Table
+
+====================================================
+CONFIGURATION
+====================================================
+
+R1
+
+interface GigabitEthernet0/0
+ ip address 10.1.1.1 255.255.255.252
+ no shutdown
+
+interface Loopback0
+ ip address 1.1.1.1 255.255.255.255
+
+router bgp 65001
+ neighbor 10.1.1.2 remote-as 65002
+ network 1.1.1.1 mask 255.255.255.255
+
+----------------------------------------------------
+
+R2
+
+interface GigabitEthernet0/0
+ ip address 10.1.1.2 255.255.255.252
+ no shutdown
+
+interface Loopback0
+ ip address 2.2.2.2 255.255.255.255
+
+router bgp 65002
+ neighbor 10.1.1.1 remote-as 65001
+ network 2.2.2.2 mask 255.255.255.255
+
+====================================================
+CHECK BGP TABLE
+====================================================
+
+Command:
+
+show ip bgp
+
+Example On R2:
+
+*> 1.1.1.1/32     10.1.1.1         0         0 65001 i
+*> 2.2.2.2/32     0.0.0.0          0     32768 i
+
+====================================================
+WHAT IS BGP TABLE
+====================================================
+
+BGP Table Contains:
+
+- All BGP Learned Routes
+- All Candidate Paths
+- Best Path Information
+
+BGP Table = BGP Database
+
+Command:
+
+show ip bgp
+
+====================================================
+CHECK ROUTING TABLE
+====================================================
+
+Command:
+
+show ip route
+
+OR
+
+show ip route bgp
+
+Example On R2:
+
+B 1.1.1.1/32 [20/0] via 10.1.1.1
+
+====================================================
+WHAT IS ROUTING TABLE
+====================================================
+
+Routing Table Contains:
+
+- Connected Routes
+- Static Routes
+- OSPF Routes
+- EIGRP Routes
+- BGP Best Routes
+
+Command:
+
+show ip route
+
+====================================================
+BGP TABLE VS ROUTING TABLE
+====================================================
+
+BGP TABLE
+
+Purpose:
+Stores All BGP Paths
+
+Command:
+show ip bgp
+
+Can Contain:
+Multiple Paths To Same Network
+
+----------------------------------------------------
+
+ROUTING TABLE
+
+Purpose:
+Stores Only Best Route
+
+Command:
+show ip route
+
+Can Contain:
+Single Best Route Installed By Router
+
+====================================================
+EXAMPLE
+====================================================
+
+Suppose R2 Learns:
+
+1.1.1.1/32 via ISP1
+1.1.1.1/32 via ISP2
+
+BGP Table:
+
+*> 1.1.1.1/32 via ISP1
+*  1.1.1.1/32 via ISP2
+
+Routing Table:
+
+B 1.1.1.1/32 via ISP1
+
+Only Best Route Installed
+
+====================================================
+VERIFY BGP ROUTES ONLY
+====================================================
+
+Command:
+
+show ip route bgp
+
+Example:
+
+B 1.1.1.1/32 [20/0] via 10.1.1.1
+
+====================================================
+VERIFY SPECIFIC ROUTE
+====================================================
+
+show ip bgp 1.1.1.1
+
+show ip route 1.1.1.1
+
+====================================================
+IMPORTANT SYMBOLS
+====================================================
+
+*     Valid Route
+
+>     Best Route
+
+*>    Valid + Best Route
+
+i     Originated By Network Command
+
+B     Route Installed By BGP In Routing Table
+
+====================================================
+LEARNING POINT
+====================================================
+
+show ip bgp
+=
+What BGP Knows
+
+show ip route
+=
+What Router Uses For Forwarding
+
+====================================================
+VERIFICATION COMMANDS
+====================================================
+
+show ip bgp
+
+show ip bgp summary
+
+show ip route
+
+show ip route bgp
+
+show ip bgp neighbors
+
+====================================================
+PRACTICAL 08 COMPLETED
+====================================================
