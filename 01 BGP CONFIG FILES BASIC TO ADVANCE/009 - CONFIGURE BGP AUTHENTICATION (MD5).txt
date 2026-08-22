@@ -1,0 +1,243 @@
+====================================================
+PRACTICAL 09 - CONFIGURE BGP AUTHENTICATION (MD5)
+====================================================
+
+TOPOLOGY
+
+        AS65001                 AS65002
+
+     +--------+              +--------+
+     |   R1   |--------------|   R2   |
+     +--------+              +--------+
+
+      G0/0                    G0/0
+   10.1.1.1/30             10.1.1.2/30
+
+====================================================
+OBJECTIVE
+====================================================
+
+1. Configure MD5 Authentication
+2. Secure BGP Neighbor Relationship
+3. Verify BGP Session
+4. Troubleshoot Authentication Failure
+
+====================================================
+WHY MD5 AUTHENTICATION
+====================================================
+
+Without Authentication:
+
+Anyone can attempt BGP peering.
+
+With MD5 Authentication:
+
+Both Routers Must Have Same Password.
+
+If Password Does Not Match:
+
+BGP Session Will Not Establish.
+
+====================================================
+BASE CONFIGURATION
+====================================================
+
+R1
+
+interface GigabitEthernet0/0
+ ip address 10.1.1.1 255.255.255.252
+ no shutdown
+
+router bgp 65001
+ neighbor 10.1.1.2 remote-as 65002
+
+----------------------------------------------------
+
+R2
+
+interface GigabitEthernet0/0
+ ip address 10.1.1.2 255.255.255.252
+ no shutdown
+
+router bgp 65002
+ neighbor 10.1.1.1 remote-as 65001
+
+====================================================
+CONFIGURE MD5 AUTHENTICATION
+====================================================
+
+R1
+
+conf t
+
+router bgp 65001
+ neighbor 10.1.1.2 password CISCO
+
+end
+
+----------------------------------------------------
+
+R2
+
+conf t
+
+router bgp 65002
+ neighbor 10.1.1.1 password CISCO
+
+end
+
+====================================================
+VERIFY NEIGHBOR STATUS
+====================================================
+
+show ip bgp summary
+
+Expected:
+
+Neighbor      V    AS MsgRcvd MsgSent State/PfxRcd
+
+10.1.1.1      4 65001      xx      xx        1
+
+OR
+
+10.1.1.2      4 65002      xx      xx        1
+
+Session Should Remain Established
+
+====================================================
+VERIFY AUTHENTICATION
+====================================================
+
+show ip bgp neighbors
+
+Look For:
+
+Password configured
+
+====================================================
+TEST AUTHENTICATION FAILURE
+====================================================
+
+R2
+
+conf t
+
+router bgp 65002
+ neighbor 10.1.1.1 password WRONGPASS
+
+end
+
+====================================================
+VERIFY FAILURE
+====================================================
+
+show ip bgp summary
+
+Expected:
+
+State = Active
+
+OR
+
+Neighbor Will Flap
+
+====================================================
+VERIFY NEIGHBOR DETAILS
+====================================================
+
+show ip bgp neighbors
+
+Possible Messages:
+
+Connection Rejected
+
+Authentication Failure
+
+MD5 Digest Error
+
+====================================================
+RESTORE CONFIGURATION
+====================================================
+
+R2
+
+conf t
+
+router bgp 65002
+ neighbor 10.1.1.1 password CISCO
+
+end
+
+====================================================
+VERIFY RECOVERY
+====================================================
+
+show ip bgp summary
+
+Expected:
+
+Neighbor      V    AS MsgRcvd MsgSent State/PfxRcd
+
+10.1.1.1      4 65001      xx      xx        1
+
+Session Established Again
+
+====================================================
+TROUBLESHOOTING COMMANDS
+====================================================
+
+show ip bgp summary
+
+show ip bgp neighbors
+
+show run | section bgp
+
+show ip tcp brief
+
+====================================================
+COMMON ISSUES
+====================================================
+
+State: Active
+
+Possible Causes:
+
+- Password Mismatch
+- Wrong Neighbor IP
+- Connectivity Issue
+- Wrong Remote-AS
+
+----------------------------------------------------
+
+State: Established
+
+Meaning:
+
+- Password Match
+- TCP Session Up
+- BGP Working Properly
+
+====================================================
+LEARNING POINT
+====================================================
+
+Without Password
+
+R1 <------> R2
+
+Anyone Can Attempt Peering
+
+----------------------------------------------------
+
+With Password
+
+R1 <--- MD5 ---> R2
+
+Passwords Must Match
+
+Otherwise:
+BGP Session Fails
+
+====================================================
+PRACTICAL 09 COMPLETED
+====================================================
