@@ -1,0 +1,289 @@
+====================================================
+PRACTICAL 10 - USE NEXT-HOP-SELF
+====================================================
+
+TOPOLOGY
+
+             AS65001
+
+     +--------+      +--------+      +--------+
+     |   R1   |------|   R2   |------|   R3   |
+     +--------+      +--------+      +--------+
+
+      Lo0             Lo0             Lo0
+    1.1.1.1         2.2.2.2         3.3.3.3
+
+====================================================
+OBJECTIVE
+====================================================
+
+1. Understand Next-Hop Problem
+2. Configure iBGP
+3. Configure next-hop-self
+4. Verify Route Reachability
+
+====================================================
+IP ADDRESSING
+====================================================
+
+R1 - R2
+
+R1 G0/0 = 10.12.12.1/24
+R2 G0/0 = 10.12.12.2/24
+
+R2 - R3
+
+R2 G0/1 = 10.23.23.2/24
+R3 G0/1 = 10.23.23.3/24
+
+Loopbacks
+
+R1 Lo0 = 1.1.1.1/32
+R2 Lo0 = 2.2.2.2/32
+R3 Lo0 = 3.3.3.3/32
+
+====================================================
+ROUTING CONFIGURATION
+====================================================
+
+R1
+
+ip route 2.2.2.2 255.255.255.255 10.12.12.2
+ip route 3.3.3.3 255.255.255.255 10.12.12.2
+
+----------------------------------------------------
+
+R2
+
+ip route 1.1.1.1 255.255.255.255 10.12.12.1
+ip route 3.3.3.3 255.255.255.255 10.23.23.3
+
+----------------------------------------------------
+
+R3
+
+ip route 1.1.1.1 255.255.255.255 10.23.23.2
+ip route 2.2.2.2 255.255.255.255 10.23.23.2
+
+====================================================
+R1 CONFIGURATION
+====================================================
+
+interface GigabitEthernet0/0
+ ip address 10.12.12.1 255.255.255.0
+ no shutdown
+
+interface Loopback0
+ ip address 1.1.1.1 255.255.255.255
+
+router bgp 65001
+ neighbor 2.2.2.2 remote-as 65001
+ neighbor 2.2.2.2 update-source loopback0
+
+ network 1.1.1.1 mask 255.255.255.255
+
+====================================================
+R2 CONFIGURATION
+====================================================
+
+interface GigabitEthernet0/0
+ ip address 10.12.12.2 255.255.255.0
+ no shutdown
+
+interface GigabitEthernet0/1
+ ip address 10.23.23.2 255.255.255.0
+ no shutdown
+
+interface Loopback0
+ ip address 2.2.2.2 255.255.255.255
+
+router bgp 65001
+ neighbor 1.1.1.1 remote-as 65001
+ neighbor 1.1.1.1 update-source loopback0
+
+ neighbor 3.3.3.3 remote-as 65001
+ neighbor 3.3.3.3 update-source loopback0
+
+====================================================
+R3 CONFIGURATION
+====================================================
+
+interface GigabitEthernet0/1
+ ip address 10.23.23.3 255.255.255.0
+ no shutdown
+
+interface Loopback0
+ ip address 3.3.3.3 255.255.255.255
+
+router bgp 65001
+ neighbor 2.2.2.2 remote-as 65001
+ neighbor 2.2.2.2 update-source loopback0
+
+ network 3.3.3.3 mask 255.255.255.255
+
+====================================================
+THE PROBLEM
+====================================================
+
+R1 Advertises:
+
+1.1.1.1/32
+
+To R2
+
+R2 Passes Route To R3
+
+But R2 Does NOT Change Next Hop
+
+R3 Sees:
+
+1.1.1.1/32 via 1.1.1.1
+
+R3 Cannot Reach 1.1.1.1
+
+Route Not Installed
+
+====================================================
+VERIFY PROBLEM
+====================================================
+
+R3
+
+show ip bgp
+
+Possible Output:
+
+*>i 1.1.1.1/32 1.1.1.1
+
+show ip route
+
+Route Missing
+
+====================================================
+CONFIGURE NEXT-HOP-SELF
+====================================================
+
+R2
+
+conf t
+
+router bgp 65001
+
+neighbor 3.3.3.3 next-hop-self
+
+end
+
+====================================================
+WHAT NEXT-HOP-SELF DOES
+====================================================
+
+Before:
+
+R1 -----> R2 -----> R3
+
+Next Hop Seen By R3
+
+1.1.1.1
+
+----------------------------------------------------
+
+After:
+
+R1 -----> R2 -----> R3
+
+Next Hop Seen By R3
+
+2.2.2.2
+
+R2 Replaces Original Next Hop
+With Its Own Address
+
+====================================================
+REFRESH BGP
+====================================================
+
+clear ip bgp * soft
+
+====================================================
+VERIFY
+====================================================
+
+R3
+
+show ip bgp
+
+Expected:
+
+*>i 1.1.1.1/32 2.2.2.2
+
+====================================================
+VERIFY ROUTING TABLE
+====================================================
+
+R3
+
+show ip route bgp
+
+Expected:
+
+B 1.1.1.1/32 via 2.2.2.2
+
+====================================================
+PING TEST
+====================================================
+
+R3
+
+ping 1.1.1.1 source loopback0
+
+Expected:
+
+!!!!!
+
+====================================================
+WHEN IS NEXT-HOP-SELF USED
+====================================================
+
+1. iBGP Environments
+
+2. Route Reflector Deployments
+
+3. MPLS VPN Networks
+
+4. When Routes Exist In BGP Table
+   But Not In Routing Table
+
+5. Next Hop Reachability Problems
+
+====================================================
+VERIFY COMMANDS
+====================================================
+
+show ip bgp
+
+show ip bgp summary
+
+show ip bgp neighbors
+
+show ip route bgp
+
+====================================================
+LEARNING POINT
+====================================================
+
+Without next-hop-self
+
+R3 Learns Route
+But Cannot Reach Next Hop
+
+----------------------------------------------------
+
+With next-hop-self
+
+R2 Changes Next Hop
+Route Becomes Reachable
+Route Gets Installed
+
+====================================================
+PRACTICAL 10 COMPLETED
+====================================================
