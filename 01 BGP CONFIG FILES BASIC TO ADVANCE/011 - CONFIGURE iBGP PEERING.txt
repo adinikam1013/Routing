@@ -1,0 +1,183 @@
+====================================================
+011 - CONFIGURE iBGP PEERING
+====================================================
+
+<br>
+
+TOPOLOGY
+
+<br>
+
+            AS65001
+
+     +--------+--------------+--------+
+     |   R1   |              |   R2   |
+     +--------+--------------+--------+
+
+       G0/0                    G0/0
+    10.1.1.1/30             10.1.1.2/30
+
+       Lo0                     Lo0
+     1.1.1.1/32             2.2.2.2/32
+
+<br>
+
+====================================================
+R1 CONFIGURATION
+====================================================
+
+<br>
+
+enable
+configure terminal
+
+hostname R1
+
+interface GigabitEthernet0/0
+ ip address 10.1.1.1 255.255.255.252
+ no shutdown
+
+interface Loopback0
+ ip address 1.1.1.1 255.255.255.255
+
+router bgp 65001
+ neighbor 10.1.1.2 remote-as 65001
+ network 1.1.1.1 mask 255.255.255.255
+
+end
+
+write memory
+
+<br>
+
+====================================================
+R2 CONFIGURATION
+====================================================
+
+<br>
+
+enable
+configure terminal
+
+hostname R2
+
+interface GigabitEthernet0/0
+ ip address 10.1.1.2 255.255.255.252
+ no shutdown
+
+interface Loopback0
+ ip address 2.2.2.2 255.255.255.255
+
+router bgp 65001
+ neighbor 10.1.1.1 remote-as 65001
+ network 2.2.2.2 mask 255.255.255.255
+
+end
+
+write memory
+
+<br>
+
+====================================================
+VERIFICATION
+====================================================
+
+<br>
+
+R1
+
+show ip bgp summary
+show ip bgp
+show ip route bgp
+show ip bgp neighbors
+
+<br>
+
+R2
+
+show ip bgp summary
+show ip bgp
+show ip route bgp
+show ip bgp neighbors
+
+<br>
+
+====================================================
+EXPECTED RESULT
+====================================================
+
+<br>
+
+show ip bgp summary
+
+<br>
+
+Neighbor        V    AS MsgRcvd MsgSent TblVer InQ OutQ Up/Down State/PfxRcd
+
+10.1.1.2        4 65001   XX      XX      X    0    0  HH:MM:SS    1
+
+<br>
+
+OR
+
+<br>
+
+10.1.1.1        4 65001   XX      XX      X    0    0  HH:MM:SS    1
+
+<br>
+
+State/PfxRcd should be 1
+
+<br>
+
+This means:
+
+- iBGP Neighbor Established
+- One Prefix Received
+- Both Routers Belong To Same AS
+
+<br>
+
+====================================================
+PING TEST
+====================================================
+
+<br>
+
+R1
+
+ping 10.1.1.2
+ping 2.2.2.2
+
+<br>
+
+R2
+
+ping 10.1.1.1
+ping 1.1.1.1
+
+<br>
+
+====================================================
+TROUBLESHOOTING COMMANDS
+====================================================
+
+<br>
+
+show ip interface brief
+
+show running-config | section bgp
+
+show ip bgp summary
+
+show ip bgp neighbors
+
+debug ip bgp
+
+undebug all
+
+<br>
+
+====================================================
+LAB COMPLETE
+====================================================
