@@ -1,0 +1,238 @@
+====================================================
+012 - BUILD 3-ROUTER iBGP TOPOLOGY
+====================================================
+
+<br>
+
+TOPOLOGY
+
+<br>
+
+                  AS65001
+
+      +--------+              +--------+
+      |   R1   |--------------|   R2   |
+      +--------+              +--------+
+                                   |
+                                   |
+                                   |
+                              +--------+
+                              |   R3   |
+                              +--------+
+
+R1 G0/0 = 10.1.1.1/30
+R2 G0/0 = 10.1.1.2/30
+
+R2 G0/1 = 10.1.1.5/30
+R3 G0/0 = 10.1.1.6/30
+
+R1 Lo0 = 1.1.1.1/32
+R2 Lo0 = 2.2.2.2/32
+R3 Lo0 = 3.3.3.3/32
+
+<br>
+
+====================================================
+R1 CONFIGURATION
+====================================================
+
+<br>
+
+enable
+configure terminal
+
+hostname R1
+
+interface GigabitEthernet0/0
+ ip address 10.1.1.1 255.255.255.252
+ no shutdown
+
+interface Loopback0
+ ip address 1.1.1.1 255.255.255.255
+
+router bgp 65001
+ neighbor 10.1.1.2 remote-as 65001
+ network 1.1.1.1 mask 255.255.255.255
+
+end
+
+write memory
+
+<br>
+
+====================================================
+R2 CONFIGURATION
+====================================================
+
+<br>
+
+enable
+configure terminal
+
+hostname R2
+
+interface GigabitEthernet0/0
+ ip address 10.1.1.2 255.255.255.252
+ no shutdown
+
+interface GigabitEthernet0/1
+ ip address 10.1.1.5 255.255.255.252
+ no shutdown
+
+interface Loopback0
+ ip address 2.2.2.2 255.255.255.255
+
+router bgp 65001
+ neighbor 10.1.1.1 remote-as 65001
+ neighbor 10.1.1.6 remote-as 65001
+
+ network 2.2.2.2 mask 255.255.255.255
+
+end
+
+write memory
+
+<br>
+
+====================================================
+R3 CONFIGURATION
+====================================================
+
+<br>
+
+enable
+configure terminal
+
+hostname R3
+
+interface GigabitEthernet0/0
+ ip address 10.1.1.6 255.255.255.252
+ no shutdown
+
+interface Loopback0
+ ip address 3.3.3.3 255.255.255.255
+
+router bgp 65001
+ neighbor 10.1.1.5 remote-as 65001
+
+ network 3.3.3.3 mask 255.255.255.255
+
+end
+
+write memory
+
+<br>
+
+====================================================
+VERIFICATION
+====================================================
+
+<br>
+
+R1
+
+show ip bgp summary
+show ip bgp
+
+<br>
+
+R2
+
+show ip bgp summary
+show ip bgp
+
+<br>
+
+R3
+
+show ip bgp summary
+show ip bgp
+
+<br>
+
+====================================================
+EXPECTED RESULT
+====================================================
+
+<br>
+
+R1 learns 2.2.2.2/32 from R2
+
+R2 learns:
+
+1.1.1.1/32 from R1
+3.3.3.3/32 from R3
+
+R3 learns 2.2.2.2/32 from R2
+
+<br>
+
+IMPORTANT OBSERVATION
+
+R1 WILL NOT LEARN 3.3.3.3/32
+
+R3 WILL NOT LEARN 1.1.1.1/32
+
+This happens because:
+
+Route learned via iBGP
+CANNOT be advertised to another iBGP neighbor
+
+This is called:
+
+iBGP Split-Horizon Rule
+
+<br>
+
+====================================================
+PING TEST
+====================================================
+
+<br>
+
+R1
+
+ping 10.1.1.2
+ping 2.2.2.2
+
+<br>
+
+R2
+
+ping 10.1.1.1
+ping 10.1.1.6
+
+<br>
+
+R3
+
+ping 10.1.1.5
+ping 2.2.2.2
+
+<br>
+
+====================================================
+TROUBLESHOOTING COMMANDS
+====================================================
+
+<br>
+
+show ip interface brief
+
+show running-config | section bgp
+
+show ip bgp summary
+
+show ip bgp
+
+show ip bgp neighbors
+
+debug ip bgp
+
+undebug all
+
+<br>
+
+====================================================
+LAB COMPLETE
+====================================================
